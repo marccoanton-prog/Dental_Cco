@@ -7,6 +7,7 @@ from django.db import models
 # ============================================
 
 class TipoDocumento(models.Model):
+    id_tipo_documento = models.AutoField(primary_key=True, db_column='id_tipo_documento')  # Definimos la llave primaria real de tu Postgres
     nombre = models.CharField(max_length=100)
     descripcion = models.CharField(max_length=255, blank=True, null=True)
     activo = models.BooleanField(default=True)
@@ -19,6 +20,7 @@ class TipoDocumento(models.Model):
 
 
 class TipoGenero(models.Model):
+    id_genero = models.AutoField(primary_key=True, db_column='id_genero')  # Definimos la llave primaria real de tu Postgres
     nombre = models.CharField(max_length=100)
     descripcion = models.CharField(max_length=255, blank=True, null=True)
     activo = models.BooleanField(default=True)
@@ -32,6 +34,7 @@ class TipoGenero(models.Model):
 
 
 class EstadoCita(models.Model):
+    id_estado_cita = models.AutoField(primary_key=True, db_column='id_estado_cita')  # Definimos la llave primaria real de tu Postgres
     nombre = models.CharField(max_length=100)
     descripcion = models.CharField(max_length=255, blank=True, null=True)
     activo = models.BooleanField(default=True)
@@ -47,18 +50,22 @@ class EstadoCita(models.Model):
 # ============================================
 
 class Paciente(models.Model):
+
+    id_paciente = models.AutoField(primary_key=True, db_column='id_paciente')  # Definimos la llave primaria real de tu Postgres    
     nombre_primero = models.CharField(max_length=150)
     nombre_segundo = models.CharField(max_length=150, blank=True, null=True)
     apellido_paterno = models.CharField(max_length=150)
     apellido_materno = models.CharField(max_length=150, blank=True, null=True)
-    tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.SET_NULL, null=True)
+    id_tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.SET_NULL, null=True, db_column='id_tipo_documento')
     numero_documento = models.CharField(max_length=20, unique=True, blank=True, null=True)
     correo_pers = models.EmailField(max_length=254, blank=True, null=True)
     correo_corp = models.EmailField(max_length=254, blank=True, null=True)
     celular = models.CharField(max_length=20, blank=True, null=True)
     telef_fijo = models.CharField(max_length=20, blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
-    genero = models.ForeignKey(TipoGenero, on_delete=models.SET_NULL, null=True)
+
+    id_genero = models.ForeignKey(TipoGenero, on_delete=models.SET_NULL, null=True, db_column='id_genero')
+
     direccion = models.CharField(max_length=255, blank=True, null=True)
     distrito = models.CharField(max_length=100, blank=True, null=True)
     provincia = models.CharField(max_length=100, blank=True, null=True)
@@ -81,20 +88,28 @@ class Paciente(models.Model):
 
 
 class Dentista(models.Model):
+    # Definimos la llave primaria real de tu Postgres
+    id_dentista = models.AutoField(primary_key=True, db_column='id_dentista')
+    # Mapeamos las columnas de tu captura
     nombre_primero = models.CharField(max_length=150)
-    nombre_segundo = models.CharField(max_length=150, blank=True, null=True)
+    nombre_segundo = models.CharField(max_length=150, null=True, blank=True)
     apellido_paterno = models.CharField(max_length=150)
-    apellido_materno = models.CharField(max_length=150, blank=True, null=True)
-    tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.SET_NULL, null=True)
-    numero_documento = models.CharField(max_length=20, unique=True, blank=True, null=True)
-    correo = models.EmailField(max_length=254, blank=True, null=True)
-    celular = models.CharField(max_length=20, blank=True, null=True)
-    telef_fijo = models.CharField(max_length=20, blank=True, null=True)
-    numero_colegiado = models.CharField(max_length=50, unique=True, blank=True, null=True)
-    especialidad = models.CharField(max_length=100, blank=True, null=True)
+    apellido_materno = models.CharField(max_length=150, null=True, blank=True)
+    
+    # Si tienes una tabla 'tipos_documento', por ahora lo dejamos como entero 
+    id_tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.SET_NULL, null=True, db_column='id_tipo_documento')
+    numero_documento = models.CharField(max_length=20, null=True, blank=True)
+    correo = models.EmailField(max_length=254, null=True, blank=True)
+    celular = models.CharField(max_length=20, null=True, blank=True)
+    telef_fijo = models.CharField(max_length=20, null=True, blank=True)
+    numero_colegiado = models.CharField(max_length=50, null=True, blank=True)
+    especialidad = models.CharField(max_length=100, null=True, blank=True)
+    
     activo = models.BooleanField(default=True)
-    fecha_creacion = models.DateField(auto_now_add=True, null=True)
-    fecha_actualizacion = models.DateField(auto_now=True, null=True)
+    fecha_creacion = models.DateField(auto_now_add=True)
+    fecha_actualizacion = models.DateField(auto_now=True)
+
+
     class Meta:
         db_table = 'dentistas'
         indexes = [
@@ -103,17 +118,21 @@ class Dentista(models.Model):
         ]
 
     def __str__(self):
-        return f"Dr(a). {self.nombre_primero} {self.apellido_paterno}"
+        segundo = f" {self.nombre_segundo}" if self.nombre_segundo else ""
+        return f"Dr(a). {self.nombre_primero}{segundo} {self.apellido_paterno}"
 
 
 class Cita(models.Model):
+    id_cita = models.AutoField(primary_key=True, db_column='id_cita')  # Definimos la llave primaria real de tu Postgres
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas')
     dentista = models.ForeignKey(Dentista, on_delete=models.RESTRICT)
     fecha_cita = models.DateField()
     hora_cita = models.TimeField()
     duracion_minutos = models.IntegerField(default=30)
     motivo = models.TextField(blank=True, null=True)
-    estado = models.ForeignKey(EstadoCita, on_delete=models.PROTECT)
+
+    estado = models.ForeignKey(EstadoCita, on_delete=models.PROTECT, db_column='estado')
+
     notas = models.TextField(blank=True, null=True)
     fecha_creacion = models.DateField(auto_now_add=True, null=True)
     fecha_actualizacion = models.DateField(auto_now=True, null=True)
