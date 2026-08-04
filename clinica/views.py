@@ -1,14 +1,17 @@
 # clinica/views.py
 from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Paciente, Dentista, Cita, TipoDocumento, TipoGenero, EstadoCita 
+from .models import Paciente, Dentista, Citas, TipoDocumento, TipoGenero, EstadoCita, Departamento, Provincia, Distrito
 from .serializers import (
     PacienteSerializer, 
     DentistaSerializer, 
-    CitaSerializer,
+    CitasSerializer,
     TipoDocumentoSerializer,
     TipoGeneroSerializer,
-    EstadoCitaSerializer
+    EstadoCitaSerializer,
+    DepartamentoSerializer,
+    ProvinciaSerializer,
+    DistritoSerializer  # Asegúrate de tener un serializer para Distritos
 )
 
 class PacienteViewSet(viewsets.ModelViewSet):
@@ -20,8 +23,8 @@ class DentistaViewSet(viewsets.ModelViewSet):
     serializer_class = DentistaSerializer
 
 class CitaViewSet(viewsets.ModelViewSet):
-    queryset = Cita.objects.all().order_by('fecha_cita', 'hora_cita')
-    serializer_class = CitaSerializer
+    queryset = Citas.objects.all().order_by('-pk')
+    serializer_class = CitasSerializer
 
 # ViewSets para catálogos (útiles para llenar selectores en los formularios del frontend)
 class TipoDocumentoViewSet(viewsets.ReadOnlyModelViewSet):
@@ -35,3 +38,15 @@ class TipoGeneroViewSet(viewsets.ReadOnlyModelViewSet):
 class EstadoCitaViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EstadoCita.objects.filter(activo=True)
     serializer_class = EstadoCitaSerializer
+
+class DepartamentoViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Departamento.objects.all().order_by('nombre')
+    serializer_class = DepartamentoSerializer
+
+class ProvinciaViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Provincia.objects.all().order_by('nombre')
+    serializer_class = ProvinciaSerializer  
+
+class DistritoViewSet(viewsets.ModelViewSet):
+    queryset = Distrito.objects.all()
+    serializer_class = DistritoSerializer

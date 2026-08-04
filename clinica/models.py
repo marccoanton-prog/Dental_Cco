@@ -49,6 +49,41 @@ class EstadoCita(models.Model):
 # TABLAS PRINCIPALES
 # ============================================
 
+class Departamento(models.Model):
+    id_departamento = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'departamento'  # <-- Pon aquí el nombre exacto de la tabla en pgAdmin
+    def __str__(self):
+        return self.nombre
+
+class Provincia(models.Model):
+    id_provincia = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100)
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE, related_name='provincias', db_column='id_departamento')
+
+    class Meta:
+        db_table = 'provincia'  # <-- Pon aquí el nombre exacto de la tabla en pgAdmin
+        unique_together = ('nombre', 'departamento')  # Asegura que no haya provincias duplicadas en el mismo departamento
+
+    def __str__(self):
+        return f"{self.nombre} ({self.departamento.nombre})"
+
+class Distrito(models.Model):
+    id_distrito = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100)
+    
+    provincia = models.ForeignKey(
+        'Provincia', 
+        on_delete=models.CASCADE, 
+        db_column='id_provincia',
+        related_name='distritos'  # Evita choques de nombres
+    )
+
+    class Meta:
+        db_table = 'distrito'
+
 class Paciente(models.Model):
 
     id_paciente = models.AutoField(primary_key=True, db_column='id_paciente')  # Definimos la llave primaria real de tu Postgres    
@@ -65,11 +100,12 @@ class Paciente(models.Model):
     fecha_nacimiento = models.DateField(blank=True, null=True)
 
     id_genero = models.ForeignKey(TipoGenero, on_delete=models.SET_NULL, null=True, db_column='id_genero')
-
     direccion = models.CharField(max_length=255, blank=True, null=True)
-    distrito = models.CharField(max_length=100, blank=True, null=True)
-    provincia = models.CharField(max_length=100, blank=True, null=True)
-    departamento = models.CharField(max_length=100, blank=True, null=True)
+
+    id_departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True, db_column='id_departamento')
+    id_provincia = models.IntegerField(null=True, blank=True)
+    id_distrito = models.IntegerField(null=True, blank=True)
+
     contacto_emergencia_nombre = models.CharField(max_length=250, blank=True, null=True)
     contacto_emergencia_telefono = models.CharField(max_length=50, blank=True, null=True)
     notas = models.TextField(blank=True, null=True)
@@ -122,28 +158,30 @@ class Dentista(models.Model):
         return f"Dr(a). {self.nombre_primero}{segundo} {self.apellido_paterno}"
 
 
-class Cita(models.Model):
-    id_cita = models.AutoField(primary_key=True, db_column='id_cita')  # Definimos la llave primaria real de tu Postgres
-    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas')
-    dentista = models.ForeignKey(Dentista, on_delete=models.RESTRICT)
+class Citas(models.Model):
+    id_cita = models.AutoField(primary_key=True, db_column='id_cita')
+    id_paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas', db_column='id_paciente')
+    id_dentista = models.ForeignKey(Dentista, on_delete=models.RESTRICT, db_column='id_dentista')
     fecha_cita = models.DateField()
     hora_cita = models.TimeField()
     duracion_minutos = models.IntegerField(default=30)
     motivo = models.TextField(blank=True, null=True)
-
-    estado = models.ForeignKey(EstadoCita, on_delete=models.PROTECT, db_column='estado')
-
+    id_estado_cita = models.ForeignKey(EstadoCita, on_delete=models.PROTECT, db_column='id_estado_cita')
     notas = models.TextField(blank=True, null=True)
     fecha_creacion = models.DateField(auto_now_add=True, null=True)
     fecha_actualizacion = models.DateField(auto_now=True, null=True)
+
     class Meta:
         db_table = 'citas'
-    class Meta:
         indexes = [
-            models.Index(fields=['paciente']),
-            models.Index(fields=['dentista']),
+            # Usamos los nombres exactos definidos arriba
+            models.Index(fields=['id_paciente']),
+            models.Index(fields=['id_dentista']),
             models.Index(fields=['fecha_cita']),
         ]
+
+    def __str__(self):
+        return f"Cita {self.id_cita} - {self.fecha_cita}"
 
 
 class Tratamiento(models.Model):
@@ -158,3 +196,4 @@ class Tratamiento(models.Model):
         db_table = 'tratamientos'
     def __str__(self):
         return self.nombre
+
