@@ -1,17 +1,32 @@
 # clinica/views.py
 from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Paciente, Dentista, Citas, TipoDocumento, TipoGenero, EstadoCita, Departamento, Provincia, Distrito
+from .models import (
+    Paciente, 
+    Dentista, 
+    Cita, 
+    TipoDocumento, 
+    TipoGenero, 
+    EstadoCita, 
+    Departamento, 
+    Provincia, 
+    Distrito, 
+    UnidadDental, 
+    ProcediDental
+)  # Asegúrate de importar los modelos correctos
 from .serializers import (
     PacienteSerializer, 
-    DentistaSerializer, 
-    CitasSerializer,
+    DentistaSerializer,
     TipoDocumentoSerializer,
     TipoGeneroSerializer,
     EstadoCitaSerializer,
     DepartamentoSerializer,
     ProvinciaSerializer,
-    DistritoSerializer  # Asegúrate de tener un serializer para Distritos
+    DistritoSerializer,  # Asegúrate de tener un serializer para Distritos
+    CitaReadSerializer,
+    CitaWriteSerializer,
+    UnidadDentalSerializer,
+    ProcediDentalSerializer,    
 )
 
 class PacienteViewSet(viewsets.ModelViewSet):
@@ -21,10 +36,6 @@ class PacienteViewSet(viewsets.ModelViewSet):
 class DentistaViewSet(viewsets.ModelViewSet):
     queryset = Dentista.objects.all().order_by('-pk')
     serializer_class = DentistaSerializer
-
-class CitaViewSet(viewsets.ModelViewSet):
-    queryset = Citas.objects.all().order_by('-pk')
-    serializer_class = CitasSerializer
 
 # ViewSets para catálogos (útiles para llenar selectores en los formularios del frontend)
 class TipoDocumentoViewSet(viewsets.ReadOnlyModelViewSet):
@@ -50,3 +61,21 @@ class ProvinciaViewSet(viewsets.ReadOnlyModelViewSet):
 class DistritoViewSet(viewsets.ModelViewSet):
     queryset = Distrito.objects.all()
     serializer_class = DistritoSerializer
+
+
+class UnidadDentalViewSet(viewsets.ModelViewSet):
+    queryset = UnidadDental.objects.all().order_by('-pk')
+    serializer_class = UnidadDentalSerializer
+
+class ProcediDentalViewSet(viewsets.ModelViewSet):
+    queryset = ProcediDental.objects.all().order_by('-pk')
+    serializer_class = ProcediDentalSerializer
+    
+
+class CitaViewSet(viewsets.ModelViewSet):
+    queryset = Cita.objects.all().order_by('-fecha_cita', '-hora_cita')
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return CitaReadSerializer
+        return CitaWriteSerializer

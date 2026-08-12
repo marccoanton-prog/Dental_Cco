@@ -45,6 +45,39 @@ class EstadoCita(models.Model):
     def __str__(self):
         return self.nombre
 
+class ProcediDental(models.Model):
+    id_procedi_dental = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=150)
+    descripcion = models.CharField(max_length=250, blank=True, null=True)
+    duracion_proc_min = models.IntegerField()
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True, null=True, blank=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'procedi_dentales'
+        verbose_name = 'Procedimiento Dental'
+        verbose_name_plural = 'Procedimientos Dentales'
+
+    def __str__(self):
+        return f"{self.nombre} ({self.duracion_proc_min} min)"
+
+class UnidadDental(models.Model):
+    id_unidad_dental = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100)
+    descripcion = models.CharField(max_length=250, blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True, null=True, blank=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'unidades_dentales'
+        verbose_name = 'Unidad Dental'
+        verbose_name_plural = 'Unidades Dentales'
+
+    def __str__(self):
+        return self.nombre
+
 # ============================================
 # TABLAS PRINCIPALES
 # ============================================
@@ -135,7 +168,8 @@ class Dentista(models.Model):
     # Si tienes una tabla 'tipos_documento', por ahora lo dejamos como entero 
     id_tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.SET_NULL, null=True, db_column='id_tipo_documento')
     numero_documento = models.CharField(max_length=20, null=True, blank=True)
-    correo = models.EmailField(max_length=254, null=True, blank=True)
+    correo_personal = models.EmailField(max_length=254, null=True, blank=True)
+    correo_corporativo = models.EmailField(max_length=254, null=True, blank=True)
     celular = models.CharField(max_length=20, null=True, blank=True)
     telef_fijo = models.CharField(max_length=20, null=True, blank=True)
     numero_colegiado = models.CharField(max_length=50, null=True, blank=True)
@@ -158,30 +192,28 @@ class Dentista(models.Model):
         return f"Dr(a). {self.nombre_primero}{segundo} {self.apellido_paterno}"
 
 
-class Citas(models.Model):
-    id_cita = models.AutoField(primary_key=True, db_column='id_cita')
-    id_paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas', db_column='id_paciente')
-    id_dentista = models.ForeignKey(Dentista, on_delete=models.RESTRICT, db_column='id_dentista')
+class Cita(models.Model):
+    id_cita = models.AutoField(primary_key=True)
+    id_paciente = models.ForeignKey(Paciente, on_delete=models.PROTECT, db_column='id_paciente')
+    id_dentista = models.ForeignKey(Dentista, on_delete=models.PROTECT, db_column='id_dentista')
+    id_unidad_dental = models.ForeignKey(UnidadDental, on_delete=models.PROTECT, db_column='id_unidad_dental')
+    id_procedi_dental = models.ForeignKey(ProcediDental, on_delete=models.PROTECT, db_column='id_procedi_dental')
+    
     fecha_cita = models.DateField()
     hora_cita = models.TimeField()
-    duracion_minutos = models.IntegerField(default=30)
+    duracion_minutos = models.IntegerField()
     motivo = models.TextField(blank=True, null=True)
-    id_estado_cita = models.ForeignKey(EstadoCita, on_delete=models.PROTECT, db_column='id_estado_cita')
+    id_estado_cita = models.ForeignKey(EstadoCita, on_delete=models.PROTECT, db_column='id_estado_cita', default=1)
     notas = models.TextField(blank=True, null=True)
-    fecha_creacion = models.DateField(auto_now_add=True, null=True)
-    fecha_actualizacion = models.DateField(auto_now=True, null=True)
+    
+    fecha_creacion = models.DateField(auto_now_add=True)
+    fecha_actualizacion = models.DateField(auto_now=True)
 
     class Meta:
         db_table = 'citas'
-        indexes = [
-            # Usamos los nombres exactos definidos arriba
-            models.Index(fields=['id_paciente']),
-            models.Index(fields=['id_dentista']),
-            models.Index(fields=['fecha_cita']),
-        ]
 
     def __str__(self):
-        return f"Cita {self.id_cita} - {self.fecha_cita}"
+        return f"Cita {self.id_cita} - {self.fecha_cita} {self.hora_cita}"
 
 
 class Tratamiento(models.Model):
