@@ -174,6 +174,7 @@ class Dentista(models.Model):
     telef_fijo = models.CharField(max_length=20, null=True, blank=True)
     numero_colegiado = models.CharField(max_length=50, null=True, blank=True)
     especialidad = models.CharField(max_length=100, null=True, blank=True)
+    id_genero = models.ForeignKey(TipoGenero, on_delete=models.SET_NULL, null=True, db_column='id_genero')
     
     activo = models.BooleanField(default=True)
     fecha_creacion = models.DateField(auto_now_add=True)
